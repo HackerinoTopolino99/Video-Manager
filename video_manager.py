@@ -5,6 +5,7 @@ import mimetypes
 import os
 import sys
 
+
 def __get_videos():
     videos = os.listdir()
     videos.sort()
@@ -42,7 +43,8 @@ def conversion():
 
     for v in videos:
         if not v.endswith("mp4"):
-            e = os.system(f'ffmpeg -i """{v}""" -codec copy """{v[:v.rfind(".")]}.mp4"""')
+            e = os.system(
+                f'ffmpeg -i """{v}""" -codec copy """{v[:v.rfind(".")]}.mp4"""')
             if e:
                 os.remove(f"{v[:v.rfind('.')]}.mp4")
                 return False
@@ -51,14 +53,19 @@ def conversion():
 
     return True
 
+
 parser = argparse.ArgumentParser()
-parser.add_argument("-d", "--directory", help="Directory of videos", default="./", action="store")
-parser.add_argument("-x", "--compress", choices=["gpu", "cpu"], help="compress videos in the directory specified")
-parser.add_argument("-c", "--convert", help="convert videos in the directory specified", action="store_true")
+parser.add_argument("-d", "--directory",
+                    help="Directory of videos", default="./", action="store")
+parser.add_argument("-x", "--compress",
+                    choices=["gpu", "cpu"], help="compress videos in the directory specified")
+parser.add_argument(
+    "-c", "--convert", help="convert videos in the directory specified", action="store_true")
 
 args = parser.parse_args()
 
 if __name__ == "__main__":
+    print(args)
     if not (args.compress != args.convert):
         parser.print_help()
         sys.exit(-1)
@@ -78,7 +85,7 @@ if __name__ == "__main__":
         if not ret:
             print("ERROR: Compression Failed")
             sys.exit(-1)
-        
+
         sys.exit(0)
 
     if args.convert:
