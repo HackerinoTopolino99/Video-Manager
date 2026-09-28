@@ -7,18 +7,20 @@ import sys
 
 
 def __get_videos():
-    videos = os.listdir()
-    videos.sort()
+    files = os.listdir()
+    files.sort()
 
-    for v in videos:
-        if os.path.isdir(v):
-            videos.remove(v)
+    videos = []
+
+    for f in files:
+        if os.path.isdir(f):
             continue
-        try:
-            if not mimetypes.guess_type(v)[0].startswith("video"):
-                videos.remove(v)
-        except AttributeError:
-            videos.remove(v)
+        else:
+            try:
+                if mimetypes.guess_type(f)[0].startswith("video"):
+                    videos.append(f)
+            except AttributeError:
+                pass
 
     return videos
 
@@ -31,7 +33,13 @@ def compression(acceleration):
 
     for v in videos:
         if not os.path.exists(f"output/{v}"):
-            if os.system(f"ffmpeg -i '{v}' -vcodec {acceleration} -crf 30 'output/{v}'"):
+            if acceleration == "h264_vaapi":
+                cmd = f"ffmpeg -hwaccel vaapi -hwaccel_device /dev/dri/renderD128 -hwaccel_output_format vaapi -i '{v}' -c:v h264_vaapi -crf 30 'output/{v}'"
+            else:
+                cmd = f"ffmpeg -i '{v}' -vcodec {acceleration} -crf 30 'output/{v}'"
+
+            print(cmd)
+            if os.system(cmd):
                 os.remove(f"output/{v}")
                 return False
 
@@ -58,14 +66,15 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--directory",
                     help="Directory of videos", default="./", action="store")
 parser.add_argument("-x", "--compress",
-                    choices=["gpu", "cpu"], help="compress videos in the directory specified")
+                    choices=["gpu", "cpu"],
+                    help="compress videos in the directory specified")
 parser.add_argument(
-    "-c", "--convert", help="convert videos in the directory specified", action="store_true")
+    "-c", "--convert",
+    help="convert videos in the directory specified", action="store_true")
 
 args = parser.parse_args()
 
 if __name__ == "__main__":
-    print(args)
     if not (args.compress != args.convert):
         parser.print_help()
         sys.exit(-1)
@@ -76,11 +85,13 @@ if __name__ == "__main__":
         print("ERROR: Directory not found")
         sys.exit(-1)
 
+    print(os.listdir())
+
     if args.compress:
         if args.compress == "cpu":
             ret = compression("libx264")
         elif args.compress == "gpu":
-            ret = compression("h264_nvenc")
+            ret = compression("h264_vaapi")
 
         if not ret:
             print("ERROR: Compression Failed")
